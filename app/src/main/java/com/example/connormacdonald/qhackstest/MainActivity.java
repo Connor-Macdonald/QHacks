@@ -16,14 +16,20 @@ import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ClassifyImages
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ImageClassification;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualClassification;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualClassifier;
-
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.RecognizedText;
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualRecognitionOptions;
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ImageText;
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.Word;
 import java.io.File;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
     private VisualRecognition vrClient;
     private CameraHelper helper;
-
+    private List<String> ClassifierIDS;
+    private String BestImgTag, BestText;
+    private Double BestImgScore = 0d;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
                 VisualRecognition.VERSION_DATE_2016_05_20,
                 getString(R.string.api_key));
         helper = new CameraHelper(this);
+        ClassifierIDS.add("FoodProducts_1108557626");
+        ClassifierIDS.add("food");
     }
 
     public void takePicture(View view) {
@@ -44,7 +52,8 @@ public class MainActivity extends AppCompatActivity {
                                     int resultCode,
                                     Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        String BestImgTag, BestText;
+        Double BestImgScore = 0d;
         if(requestCode == CameraHelper.REQUEST_IMAGE_CAPTURE) {
             final Bitmap photo = helper.getBitmap(resultCode);
             final File photoFile = helper.getFile(resultCode);
@@ -53,27 +62,44 @@ public class MainActivity extends AppCompatActivity {
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
+                    String BestImgTag, BestText;
+                    Double BestImgScore = 0d;
                     VisualClassification response =
                             vrClient.classify(
                                     new ClassifyImagesOptions.Builder()
+                                            .classifierIds(ClassifierIDS)
                                             .images(photoFile)
                                             .build()
                             ).execute();
 
-                    ImageClassification classification =
-                            response.getImages().get(0);
+                    ImageClassification ImgClassification = response.getImages().get(0);
+                    VisualClassifier ImgClassifier = ImgClassification.getClassifiers().get(0);
 
-                    VisualClassifier classifier =
-                            classification.getClassifiers().get(0);
                     final StringBuffer output = new StringBuffer();
+                    for(VisualClassifier.VisualClass object: ImgClassifier.getClasses()) {
+                        Log.d("MyTag",object.getName());
+                        if(object.getScore() > BestImgScore){
+                            BestImgScore = object.getScore();
+                             BestImgTag = object.getName();
+                        }
 
-                    for(VisualClassifier.VisualClass object: classifier.getClasses()) {
                         if(object.getScore() > 0.7f)
+                            output.append("<").append(object.getName()).append("> ");
+                    }
+                    //Text
+                    RecognizedText response2 =
+                            vrClient.recognizeText(new  VisualRecognitionOptions.Builder()
+                                    .images(photoFile).build()).execute();
+
+                    ImageText TextIdentified = response2.getImages().get(0);
+
+                    for(Word words: TextIdentified.getWords()) {
+                        Log.d("MyTag",words.getWord());
+                        if(words.getScore() > 0.7f)
                             output.append("<")
-                                    .append(object.getName())
+                                    .append(words.getWord())
                                     .append("> ");
                     }
-                    Log.d("MyTag",output.toString());
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
