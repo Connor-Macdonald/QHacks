@@ -47,11 +47,11 @@ public class MainActivity extends AppCompatActivity {
     private List<String> Catigories = new ArrayList<String>();
 
     //Graph Infor
-    private int cal = 12;
-    private int carbs = 23;
-    private int fat = 35;
-    private int sodium = 48;
-    private int protein = 22;
+    private int cal = 0;
+    private int carbs = 0;
+    private int fat = 0;
+    private int sodium = 0;
+    private int protein = 0;
     //LineChart lineChart;
     ArrayList<String> xAxes = new ArrayList<>();
     ArrayList<DataPoint> yAxes = new ArrayList<>();
@@ -347,6 +347,11 @@ public class MainActivity extends AppCompatActivity {
                  ToggleButton switchButton = findViewById(R.id.toggleButton2);
                  switchButton.setVisibility(View.VISIBLE);
                  FoundFacts.add(NEW);
+                 cal += Double.parseDouble(NEW.Nutrition[8][2])/2000*100;
+                 carbs += Double.parseDouble(NEW.Nutrition[6][2])/250*100;
+                 fat += Double.parseDouble(NEW.Nutrition[4][2])/55*100;
+                 sodium += Double.parseDouble(NEW.Nutrition[9][2])/2300*100;
+                 protein += Double.parseDouble(NEW.Nutrition[3][2])/50*100;
                  detectedObjects.setVisibility(View.VISIBLE);
                  ImageView preview =
                          findViewById(R.id.preview);
