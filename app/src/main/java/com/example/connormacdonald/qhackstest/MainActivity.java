@@ -7,9 +7,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
-
+import com.google.gson.stream.JsonReader;
 import com.ibm.watson.developer_cloud.android.library.camera.CameraHelper;
 import com.ibm.watson.developer_cloud.natural_language_understanding.v1.NaturalLanguageUnderstanding;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.VisualRecognition;
@@ -17,38 +16,13 @@ import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ClassifyImages
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ImageClassification;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualClassification;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualClassifier;
-import com.ibm.watson.developer_cloud.visual_recognition.v3.model.RecognizedText;
-import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualRecognitionOptions;
-import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ImageText;
-import com.ibm.watson.developer_cloud.visual_recognition.v3.model.Word;
-
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.AnalysisResults;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.AnalyzeOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.AnalysisResults;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.AnalyzeOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.Author;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.CategoriesOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.CategoriesResult;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.ConceptsOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.ConceptsResult;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.EmotionOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.EmotionScores;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.EntitiesOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.EntitiesResult;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.Features;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.KeywordsOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.KeywordsResult;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.MetadataOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.MetadataResult;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.RelationsOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.SemanticRolesOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.SemanticRolesResult;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.SentimentOptions;
-import com.ibm.watson.developer_cloud.natural_language_understanding.v1.model.TargetedSentimentResults;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
+import javax.net.ssl.HttpsURLConnection;
 import static java.lang.System.getProperty;
 
 
@@ -59,8 +33,24 @@ public class MainActivity extends AppCompatActivity {
     private VisualRecognition vrClient;
     private CameraHelper helper;
     private List<String> ClassifierIDS = new ArrayList<String>();
-    private String BestImgTag, BestText;
-    private Double BestImgScore = 0d;
+    private List<String> Catigories = new ArrayList<String>();
+    public class NutritionForFood {
+        private String Name;
+        private String[][] Nutrition = new String[14][3];
+        public NutritionForFood(String Name, String[][] Nutrition){
+            this.Name = Name;
+            this.Nutrition = Nutrition.clone();
+        }
+        public String toString(){
+            String ret = "Name: "+this.Name + "\n";
+                for(int i = 0;i<14;i++){
+                    ret = ret + "" + Nutrition[i][0]+ " " +Nutrition[i][2]+" "+Nutrition[i][1]+"\n";
+                }
+            return ret;
+        }
+    }
+    private List<NutritionForFood> FoundFacts = new ArrayList<NutritionForFood>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,6 +66,20 @@ public class MainActivity extends AppCompatActivity {
         //service.setDefaultHeaders(getDefaultHeaders());
         service.setUsernameAndPassword(username, password);
         service.setEndPoint(getProperty("natural_language_understanding.url"));
+        Catigories.add("calories");
+        Catigories.add("fat");
+        Catigories.add("saturated fat");
+        Catigories.add("trans fat");
+        Catigories.add("cholesterol");
+        Catigories.add("sodium");
+        Catigories.add("carbohydrates");
+        Catigories.add("fiber");
+        Catigories.add("sugars");
+        Catigories.add("protein");
+        Catigories.add("vitamin a");
+        Catigories.add("vitamin b");
+        Catigories.add("calcium");
+        Catigories.add("iron");
     }
 
     public void takePicture(View view) {
@@ -89,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             super.onActivityResult(requestCode, resultCode, data);
             String BestImgTag, BestText;
-            Double BestImgScore = 0d;
+            Double BestFoodScore = 0d;
             if (requestCode == CameraHelper.REQUEST_IMAGE_CAPTURE) {
                 final Bitmap photo = helper.getBitmap(resultCode);
                 final File photoFile = helper.getFile(resultCode);
@@ -98,9 +102,9 @@ public class MainActivity extends AppCompatActivity {
                 AsyncTask.execute(new Runnable() {
                     @Override
                     public void run() {
-                        String BestImgTag = "na", BestText;
-                        Double BestImgScore = 0d;
-                        VisualClassification response =
+                        String BestFoodTag = "na", BestImgTag = "na";
+                        Double BestFoodScore = 0d, BestImgScore = 0d;
+                        VisualClassification responseFood =
                                 vrClient.classify(
                                         new ClassifyImagesOptions.Builder()
                                                 .classifierIds(ClassifierIDS)
@@ -108,29 +112,49 @@ public class MainActivity extends AppCompatActivity {
                                                 .build()
                                 ).execute();
 
-                        ImageClassification ImgClassification = response.getImages().get(0);
-                        VisualClassifier ImgClassifier = ImgClassification.getClassifiers().get(0);
+                        ImageClassification FoodClassification = responseFood.getImages().get(0);
+                        VisualClassifier FoodClassifier = FoodClassification.getClassifiers().get(0);
 
                         final StringBuffer output = new StringBuffer();
+                        for (VisualClassifier.VisualClass object : FoodClassifier.getClasses()) {
+                            Log.d("MyTag", object.getName());
+                            if (object.getScore() > BestFoodScore) {
+                                BestFoodScore = object.getScore();
+                                BestFoodTag = object.getName();
+                            }
+                        }
+                        Log.d("MyTag", "Best Tag:" + BestFoodTag);
+                        output.append("Item Is: ").append(BestFoodTag).append("\n ");
+
+                        VisualClassification responseImg =
+                                vrClient.classify(
+                                        new ClassifyImagesOptions.Builder()
+                                                .images(photoFile)
+                                                .build()
+                                ).execute();
+
+                        ImageClassification ImgClassification = responseImg.getImages().get(0);
+                        VisualClassifier ImgClassifier = ImgClassification.getClassifiers().get(0);
+
                         for (VisualClassifier.VisualClass object : ImgClassifier.getClasses()) {
                             Log.d("MyTag", object.getName());
                             if (object.getScore() > BestImgScore) {
                                 BestImgScore = object.getScore();
                                 BestImgTag = object.getName();
                             }
-
-                            if (object.getScore() > 0.7f)
-                                output.append("<").append(object.getName()).append("> ");
                         }
                         Log.d("MyTag", "Best Tag:" + BestImgTag);
-                        //Text
+                        output.append("Item Is: ").append(BestImgTag).append("\n ");
+                        /*//Text
                         RecognizedText response2 =
                                 vrClient.recognizeText(new VisualRecognitionOptions.Builder()
                                         .images(photoFile).build()).execute();
 
                         ImageText TextIdentified = response2.getImages().get(0);
                         Log.d("MyTag", TextIdentified.getText());
-
+                        for (Word words: TextIdentified.getWords()){
+                            Log.d("MyTag", words.getWord() + words.getScore());
+                        }
 
                         ConceptsOptions concepts = new ConceptsOptions.Builder()
                                 .limit(5)
@@ -144,16 +168,161 @@ public class MainActivity extends AppCompatActivity {
 
                         AnalysisResults results = service.analyze(parameters).execute();
                         results.getAnalyzedText();
+                        boolean isNutrition = false;
                         for (ConceptsResult concept : results.getConcepts()) {
                             Log.d("MyTag", "Text: " + concept.getText());
                             Log.d("MyTag", "Reasource: " + concept.getDbpediaResource());
                             Log.d("MyTag", "Score: " + concept.getRelevance());
+                            if(concept.getText().toLowerCase().contains("nutrition")||concept.getText().toLowerCase().contains("water")||concept.getText().toLowerCase().contains("carb")){
+                                isNutrition = true;
+                            }
                         }
                         for (CategoriesResult result : results.getCategories()) {
                             Log.d("MyTag", "Label: " + result.getLabel());
                             Log.d("MyTag", "Score: " + result.getScore());
+                            if(result.getLabel().toLowerCase().contains("nutrition")||result.getLabel().toLowerCase().contains("health and fitness")||result.getLabel().toLowerCase().contains("food and drink")){
+                                isNutrition = true;
+                            }
                         }
+                        if(isNutrition){
+                            String[] lines = TextIdentified.getText().split(System.getProperty("line.separator"));
+                            for(String line : lines){
+                                for(String fact : Catigories){
+                                    if(line.toLowerCase().contains(fact)){
+                                        try {
+                                            Integer.parseInt(line.replaceAll("[\\D]", ""));
+                                            FoundFacts.add(line);
+                                        }
+                                        catch( NumberFormatException e){}
+                                    }
+                                }
+                            }
+                            Log.d("MyTag", FoundFacts.toString());
+                        }*/
+                        try {
+                            String FoodName;
+                            String FoodNum = "0";
+                            BestFoodTag.replace(" ","%20");
+                            URL FoodSearch = new URL(" https://api.nal.usda.gov/ndb/search/?format=json&q="+BestFoodTag+"&sort=n&max=25&offset=0&api_key=vZz63oyg9zKtD9bo4jn8MDSagBPusDC4bXAvDYJJ");
+                            HttpsURLConnection myConnection =
+                                    (HttpsURLConnection) FoodSearch.openConnection();
 
+                            if (myConnection.getResponseCode() == 200) {
+                                InputStream responseBody = myConnection.getInputStream();
+                                InputStreamReader responseBodyReader =
+                                        new InputStreamReader(responseBody, "UTF-8");
+                                JsonReader jsonReader = new JsonReader(responseBodyReader);
+                                jsonReader.beginObject();
+                                Log.d("MyTag",jsonReader.nextName());
+                                jsonReader.beginObject();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextInt();
+                                jsonReader.nextName();
+                                jsonReader.nextInt();
+                                jsonReader.nextName();
+                                jsonReader.nextInt();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.beginArray();
+                                jsonReader.beginObject();
+                                jsonReader.nextName();
+                                jsonReader.nextInt();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                FoodName = jsonReader.nextString();
+                                jsonReader.nextName();
+                                FoodNum = jsonReader.nextString();
+                                Log.d("MyTagString FoodNum",FoodName + " " + FoodNum);
+                                jsonReader.close();
+                                myConnection.disconnect();
+                            } else {
+                                Log.e("MyTag", String.valueOf(myConnection.getResponseCode()));
+                            }
+                            URL NutritionSearch = new URL(" https://api.nal.usda.gov/ndb/nutrients/?format=json&api_key=vZz63oyg9zKtD9bo4jn8MDSagBPusDC4bXAvDYJJ&nutrients=205&nutrients=204&nutrients=208&nutrients=269" +
+                                    "&nutrients=606&nutrients=605&nutrients=601&nutrients=307&nutrients=291&nutrients=203&nutrients=318&nutrients=418&nutrients=301&nutrients=303&ndbno="+FoodNum);
+                            HttpsURLConnection myConnection2 =
+                                    (HttpsURLConnection) NutritionSearch.openConnection();
+
+                            if (myConnection2.getResponseCode() == 200) {
+                                InputStream responseBody = myConnection2.getInputStream();
+                                InputStreamReader responseBodyReader =
+                                        new InputStreamReader(responseBody, "UTF-8");
+                                JsonReader jsonReader = new JsonReader(responseBodyReader);
+                                jsonReader.beginObject();
+                                jsonReader.nextName();
+                                jsonReader.beginObject();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextInt();
+                                jsonReader.nextName();
+                                jsonReader.nextInt();
+                                jsonReader.nextName();
+                                jsonReader.nextInt();
+                                jsonReader.nextName();
+                                jsonReader.beginArray();
+                                jsonReader.beginObject();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                jsonReader.nextName();
+                                jsonReader.nextDouble();
+                                jsonReader.nextName();
+                                jsonReader.nextString();
+                                Log.d("MyTag",jsonReader.nextName());
+                                jsonReader.beginArray();
+                                int i = 0;
+                                String[][] Nutrition = new String[14][3];
+                                while(jsonReader.hasNext()) {
+                                    jsonReader.beginObject();
+                                    jsonReader.nextName();
+                                    jsonReader.nextString();
+                                    Log.d("MyTag",jsonReader.nextName());
+                                    Log.d("MyTag",String.valueOf(i));
+                                    Nutrition[i][0] = jsonReader.nextString();
+                                    jsonReader.nextName();
+                                    Nutrition[i][1] = jsonReader.nextString();
+                                    jsonReader.nextName();
+                                    Nutrition[i][2] = jsonReader.nextString();
+                                    jsonReader.nextName();
+                                    try {
+                                        jsonReader.nextDouble();
+                                    } catch(Exception e){
+                                        jsonReader.nextString();
+                                    }
+                                    jsonReader.endObject();
+                                    i++;
+                                }
+                                NutritionForFood NEW = new NutritionForFood(BestFoodTag, Nutrition);
+                                Log.d("MyTag", NEW.toString());
+                                FoundFacts.add(NEW);
+                                jsonReader.endArray();
+                                jsonReader.close();
+
+                            }
+                            else {
+                                Log.e("MyTag", String.valueOf(myConnection2.getResponseCode()));
+                            }
+                        }
+                        catch(Exception e){
+                            Log.e("MyTag", "OOPS"+e.toString());
+                        }
+                        ;
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
