@@ -218,11 +218,8 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             String FoodName;
                             String FoodNum = "0";
-                            BestFoodTag.replace(" ","%20");
-                            URL FoodSearch = new URL(" https://api.nal.usda.gov/ndb/search/?format=json&q="+BestFoodTag+"&sort=n&max=25&offset=0&api_key=vZz63oyg9zKtD9bo4jn8MDSagBPusDC4bXAvDYJJ");
-                            HttpsURLConnection myConnection =
-                                    (HttpsURLConnection) FoodSearch.openConnection();
-
+                            URL FoodSearch = new URL(" https://api.nal.usda.gov/ndb/search/?format=json&q="+BestFoodTag.replace(" ","%20")+"&sort=n&max=25&offset=0&api_key=vZz63oyg9zKtD9bo4jn8MDSagBPusDC4bXAvDYJJ");
+                            HttpsURLConnection myConnection = (HttpsURLConnection) FoodSearch.openConnection();
                             if (myConnection.getResponseCode() == 200) {
                                 InputStream responseBody = myConnection.getInputStream();
                                 InputStreamReader responseBodyReader =
