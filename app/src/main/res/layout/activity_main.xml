@@ -1,44 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.connormacdonald.qhackstest.MainActivity">
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent" android:layout_height="fill_parent"
-        android:orientation="vertical">
-        <LinearLayout android:layout_width="wrap_content"
-            android:layout_height="0dip" android:layout_weight="1"
-            android:orientation="vertical">
-            <TextView
+    <android.support.v4.view.ViewPager
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <include
+        android:id="@+id/include"
+        layout="@layout/content_main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:background="@color/colorAccent"
+        android:padding="5dp"
+        app:layout_anchor="@+id/viewPager"
+        app:layout_anchorGravity="bottom|center"
+        tools:layout_editor_absoluteY="503dp">
+
+        <TableRow
+            android:layout_width="367dp"
+            android:layout_height="51dp"
+            android:clipToPadding="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/search"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/detected_objects"
-                android:layout_alignParentTop="true"/>
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_gravity="left|center"
+                android:layout_marginBottom="3dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="3dp"
+                android:layout_weight="5"
+                android:background="@drawable/search"
+                android:maxHeight="64dp"
+                android:maxWidth="64dp"
+                android:minHeight="64dp"
+                android:minWidth="64dp"
+                android:onClick="searchData"
                 android:scaleType="fitCenter"
-                android:id="@+id/preview"
-                android:layout_below="@+id/detected_objects"/>
-        </LinearLayout>
-        <LinearLayout android:layout_width="wrap_content"
-            style="@android:style/ButtonBar" android:layout_height="wrap_content"
-            android:orientation="vertical">
+                tools:layout_editor_absoluteX="0dp"
+                tools:layout_editor_absoluteY="306dp" />
 
-            <Button
+            <ImageButton
+                android:id="@+id/image"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:text="Take picture"
-                android:onClick="takePicture"/>
+                android:layout_alignTop="@+id/search"
+                android:layout_centerHorizontal="true"
+                android:layout_gravity="center"
+                android:layout_marginBottom="-3dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="-3dp"
+                android:layout_weight="5"
+                android:background="@drawable/burger"
+                android:onClick="takeFoodPicture"
+                android:scaleType="fitCenter"
+                tools:layout_editor_absoluteX="0dp"
+                tools:layout_editor_absoluteY="306dp" />
 
-        </LinearLayout>
+            <ImageButton
+                android:id="@+id/nutrition"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignTop="@+id/image"
+                android:layout_gravity="right|center|start"
+                android:layout_marginBottom="4dp"
+                android:layout_marginEnd="14dp"
+                android:layout_marginStart="14dp"
+                android:layout_marginTop="4dp"
+                android:layout_weight="5"
+                android:background="@drawable/nutrition"
+                android:onClick="takeNutrientPicture"
+                android:scaleType="fitCenter"
+                tools:layout_editor_absoluteX="0dp"
+                tools:layout_editor_absoluteY="306dp" />
 
-    </LinearLayout>
+            <ImageButton
+                android:id="@+id/analytics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@+id/search"
+                android:layout_centerHorizontal="true"
+                android:layout_gravity="center"
+                android:layout_marginEnd="12dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="5"
+                android:background="@drawable/analytics"
+                android:onClick="openAnalytics"
+                android:scaleType="fitCenter"
+                tools:layout_editor_absoluteX="0dp"
+                tools:layout_editor_absoluteY="306dp" />
+        </TableRow>
+    </android.support.constraint.ConstraintLayout>
 
-
-</android.support.constraint.ConstraintLayout>
+</android.support.design.widget.CoordinatorLayout>

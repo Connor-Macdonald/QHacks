@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">QHacksTest</string>
     <string name="api_key">134eb284103e6244293f2a94eb40c0ccc6f4bf80</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_nutrition">Nutrition Capture</string>
+    <string name="title_search">Search</string>
+    <string name="title_food">Food Capture</string>
 </resources>

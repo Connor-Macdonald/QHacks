@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 VisualRecognition.VERSION_DATE_2016_05_20,
                 getString(R.string.api_key));
         helper = new CameraHelper(this);
-        ClassifierIDS.add("FoodProducts_1108557626");
+        ClassifierIDS.add("products_1758431799");
         ClassifierIDS.add("food");
         service = new NaturalLanguageUnderstanding(NaturalLanguageUnderstanding.VERSION_DATE_2017_02_27);
         //service.setDefaultHeaders(getDefaultHeaders());
@@ -84,6 +84,22 @@ public class MainActivity extends AppCompatActivity {
 
     public void takePicture(View view) {
         helper.dispatchTakePictureIntent();
+    }
+
+    public void searchData(View view) {
+
+    }
+
+    public void takeFoodPicture(View view) {
+        takePicture(view);
+    }
+
+    public void takeNutrientPicture(View view) {
+
+    }
+
+    public void openAnalytics(View view) {
+
     }
 
     @Override
