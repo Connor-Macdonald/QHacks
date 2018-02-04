@@ -81,21 +81,21 @@ public class MainActivity extends AppCompatActivity {
         detectedObjects.setVisibility(View.INVISIBLE);
         preview.setVisibility(View.INVISIBLE);
         graph.setVisibility(View.INVISIBLE);
-        switchButton.setText("See Image");
+        switchButton.setText("See Words");
     }
 
     public void setImage(View view){
         detectedObjects.setVisibility(View.INVISIBLE);
         preview.setVisibility(View.VISIBLE);
         graph.setVisibility(View.GONE);
-        switchButton.setText("See Image");
+        switchButton.setText("See Words");
     }
 
     public void setGraph(View view){
         detectedObjects.setVisibility(View.INVISIBLE);
         preview.setVisibility(View.INVISIBLE);
         graph.setVisibility(View.VISIBLE);
-        switchButton.setText("See Image");
+        switchButton.setText("See Words");
     }
 
     public void switchGraphVisibility(View view) {
@@ -205,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void takePicture(View view) {
+        setNone(view);
         helper.dispatchTakePictureIntent();
     }
 
