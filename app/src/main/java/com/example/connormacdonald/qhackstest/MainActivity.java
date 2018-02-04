@@ -2,6 +2,7 @@ package com.example.connormacdonald.qhackstest;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,6 +20,11 @@ import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ClassifyImages
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ImageClassification;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualClassification;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualClassifier;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.helper.StaticLabelsFormatter;
+import com.jjoe64.graphview.series.BarGraphSeries;
+import com.jjoe64.graphview.series.DataPoint;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -40,20 +46,123 @@ public class MainActivity extends AppCompatActivity {
     private List<String> ClassifierIDS = new ArrayList<String>();
     private List<String> Catigories = new ArrayList<String>();
 
+    //Graph Infor
+    private int cal = 12;
+    private int carbs = 23;
+    private int fat = 35;
+    private int sodium = 48;
+    private int protein = 22;
+    //LineChart lineChart;
+    ArrayList<String> xAxes = new ArrayList<>();
+    ArrayList<DataPoint> yAxes = new ArrayList<>();
+
+    TextView detectedObjects;
+    ImageView preview;
+    GraphView graph;
+    ToggleButton switchButton;
+
     public void switchData(View view) {
-        TextView detectedObjects = findViewById(R.id.detected_objects);
-        ImageView preview = findViewById(R.id.preview);
-        ToggleButton switchButton = findViewById(R.id.toggleButton2);
         if(detectedObjects.getVisibility()==View.INVISIBLE) {
-            detectedObjects.setVisibility(View.VISIBLE);
-            preview.setVisibility(View.INVISIBLE);
-            switchButton.setText("See Image");
+            setWords(view);
         }
         else{
-            detectedObjects.setVisibility(View.INVISIBLE);
-            preview.setVisibility(View.VISIBLE);
-            switchButton.setText("See Data");
+            setImage(view);
         }
+    }
+
+    public void setWords(View view){
+        detectedObjects.setVisibility(View.VISIBLE);
+        preview.setVisibility(View.INVISIBLE);
+        graph.setVisibility(View.INVISIBLE);
+        switchButton.setText("See Image");
+    }
+
+    public void setNone(View view){
+        detectedObjects.setVisibility(View.INVISIBLE);
+        preview.setVisibility(View.INVISIBLE);
+        graph.setVisibility(View.INVISIBLE);
+        switchButton.setText("See Image");
+    }
+
+    public void setImage(View view){
+        detectedObjects.setVisibility(View.INVISIBLE);
+        preview.setVisibility(View.VISIBLE);
+        graph.setVisibility(View.GONE);
+        switchButton.setText("See Image");
+    }
+
+    public void setGraph(View view){
+        detectedObjects.setVisibility(View.INVISIBLE);
+        preview.setVisibility(View.INVISIBLE);
+        graph.setVisibility(View.VISIBLE);
+        switchButton.setText("See Image");
+    }
+
+    public void switchGraphVisibility(View view) {
+        if (detectedObjects.getVisibility() == View.INVISIBLE) {
+            preview.setVisibility(View.VISIBLE);
+        } else {
+            preview.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void openAnalytics(View view) {
+        setGraph(view);
+        //setContentView(R.layout.activity_main);
+        GraphView graph = (GraphView) findViewById(R.id.graph);
+        BarGraphSeries<DataPoint> series = new BarGraphSeries<>(new DataPoint[]{
+                new DataPoint(0, cal),
+                new DataPoint(2, carbs),
+                new DataPoint(4, fat),
+                new DataPoint(6, sodium),
+                new DataPoint(8, protein),
+        });
+
+        //graph.setScaleX(1);
+        graph.setPadding(10, 10, 10, 10);
+
+        // set manual X bounds
+        graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(10);
+
+
+        // set manual Y bounds
+        graph.getViewport().setYAxisBoundsManual(true);
+        graph.getViewport().setMinY(0);
+        graph.getViewport().setMaxY(200);
+        graph.getViewport().setMaxXAxisSize(6);
+
+        //Dimensions
+        //graph.setPadding(10, 10, 10, 10);
+        graph.getLegendRenderer().setBackgroundColor(Color.BLUE);
+
+
+        //labels
+        graph.getGridLabelRenderer().setNumVerticalLabels(10);
+        graph.getGridLabelRenderer().setVerticalAxisTitle("Percent of Daily Value (%)");
+        graph.getGridLabelRenderer().setHorizontalAxisTitle("Nutrients");
+        //graph.getGridLabelRenderer().setLabelsSpace(1);
+        graph.setTitle("Daily Nutrition Values");
+
+
+        //naming the x-axis
+        String[] horizontalAxisNames = new String[]{"KCal",
+                "Carbs", "Fat", "Sodium", "Protein"};
+
+        String[] verticAxisNames = new String[]{"0%", "20%", "40%", "60%",
+                "80%", "100%", "120%", "140%", "160%", "180%", "200%"};
+
+        StaticLabelsFormatter staticLabels = new StaticLabelsFormatter(
+                graph, horizontalAxisNames, verticAxisNames);
+        graph.getGridLabelRenderer().setLabelFormatter(staticLabels);
+        graph.getGridLabelRenderer().setHorizontalLabelsAngle(90);
+        graph.getGridLabelRenderer().setNumHorizontalLabels(10);
+        graph.getLegendRenderer().setTextColor(Color.BLACK);
+
+        graph.addSeries(series);
+
+        series.setDataWidth(0.75);
     }
 
     public class NutritionForFood {
@@ -85,6 +194,14 @@ public class MainActivity extends AppCompatActivity {
         ClassifierIDS.add("products_1758431799");
         ClassifierIDS.add("food");
 
+        detectedObjects = findViewById(R.id.detected_objects);
+        preview = findViewById(R.id.preview);
+        graph = findViewById(R.id.graph);
+        switchButton = findViewById(R.id.toggleButton2);
+
+        graph.setVisibility(View.INVISIBLE);
+        preview.setVisibility(View.INVISIBLE);
+        detectedObjects.setVisibility(View.INVISIBLE);
     }
 
     public void takePicture(View view) {
@@ -92,19 +209,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void searchData(View view) {
-
+        GraphView graph = (GraphView) findViewById(R.id.graph);
+        if (graph.getVisibility() == View.VISIBLE) {
+            setImage(view);
+        }
     }
 
     public void takeFoodPicture(View view) {
+        GraphView graph = (GraphView) findViewById(R.id.graph);
+        if (graph.getVisibility() == View.VISIBLE) {
+            setImage(view);
+        }
         takePicture(view);
     }
 
     public void takeNutrientPicture(View view) {
-
-    }
-
-    public void openAnalytics(View view) {
-
+        GraphView graph = (GraphView) findViewById(R.id.graph);
+        if (graph.getVisibility() == View.VISIBLE) {
+            setImage(view);
+        }
     }
 
     protected void QueryDatabase(String query) throws Exception {
@@ -223,7 +346,13 @@ public class MainActivity extends AppCompatActivity {
                  ToggleButton switchButton = findViewById(R.id.toggleButton2);
                  switchButton.setVisibility(View.VISIBLE);
                  FoundFacts.add(NEW);
-
+                 detectedObjects.setVisibility(View.VISIBLE);
+                 ImageView preview =
+                         findViewById(R.id.preview);
+                 preview.setVisibility(View.INVISIBLE);
+                 GraphView graph =
+                         findViewById(R.id.graph);
+                 graph.setVisibility(View.INVISIBLE);
              } else {
                  throw new Exception(String.valueOf(myConnection2.getResponseCode()));
              }

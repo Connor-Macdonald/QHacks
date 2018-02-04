@@ -1,1 +1,2 @@
-include ':app'
+include ':app', ':GraphView-master'
+project(':GraphView-master').projectDir = new File('lib/GraphView-master')
