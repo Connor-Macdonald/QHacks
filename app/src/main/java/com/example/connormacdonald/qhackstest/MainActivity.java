@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 VisualRecognition.VERSION_DATE_2016_05_20,
                 getString(R.string.api_key));
         helper = new CameraHelper(this);
-        ClassifierIDS.add("FoodProducts_1108557626");
+        ClassifierIDS.add("products_1758431799");
         ClassifierIDS.add("food");
         service = new NaturalLanguageUnderstanding(NaturalLanguageUnderstanding.VERSION_DATE_2017_02_27);
         //service.setDefaultHeaders(getDefaultHeaders());
@@ -202,11 +202,8 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             String FoodName;
                             String FoodNum = "0";
-                            BestFoodTag.replace(" ","%20");
-                            URL FoodSearch = new URL(" https://api.nal.usda.gov/ndb/search/?format=json&q="+BestFoodTag+"&sort=n&max=25&offset=0&api_key=vZz63oyg9zKtD9bo4jn8MDSagBPusDC4bXAvDYJJ");
-                            HttpsURLConnection myConnection =
-                                    (HttpsURLConnection) FoodSearch.openConnection();
-
+                            URL FoodSearch = new URL(" https://api.nal.usda.gov/ndb/search/?format=json&q="+BestFoodTag.replace(" ","%20")+"&sort=n&max=25&offset=0&api_key=vZz63oyg9zKtD9bo4jn8MDSagBPusDC4bXAvDYJJ");
+                            HttpsURLConnection myConnection = (HttpsURLConnection) FoodSearch.openConnection();
                             if (myConnection.getResponseCode() == 200) {
                                 InputStream responseBody = myConnection.getInputStream();
                                 InputStreamReader responseBodyReader =
